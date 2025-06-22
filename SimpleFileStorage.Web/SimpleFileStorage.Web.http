@@ -1,0 +1,6 @@
+@SimpleFileStorage.Web_HostAddress = http://localhost:5194
+
+GET {{SimpleFileStorage.Web_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
