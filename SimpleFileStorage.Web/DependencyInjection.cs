@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.ComponentModel.Design.Serialization;
+using Microsoft.EntityFrameworkCore;
 using SimpleFileStorage.Web.AppServices;
 using SimpleFileStorage.Web.AppServices.Contract;
 using SimpleFileStorage.Web.DataAccess;
@@ -22,6 +23,14 @@ public static class DependencyInjection
             .AddDataAccess();
         
         return services;
+    }
+
+    public static IHost MigrateDatabase(this IHost host)
+    {
+        using var scope = host.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<StoredFilesContext>();
+        context.Database.Migrate();
+        return host;
     }
     
     private static IServiceCollection AddAppServices(this IServiceCollection services)

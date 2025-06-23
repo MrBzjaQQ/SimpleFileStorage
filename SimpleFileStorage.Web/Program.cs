@@ -18,6 +18,8 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
+app.MigrateDatabase();
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();

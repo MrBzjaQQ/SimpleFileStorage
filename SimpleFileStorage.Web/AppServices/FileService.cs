@@ -29,7 +29,7 @@ public sealed class FileService : IFileService
 
         var stored = new StoredFile
         {
-            Id = Guid.NewGuid(),
+            Id = Guid.CreateVersion7(),
             FileName = fileName,
             UploadedAt = DateTime.UtcNow
         };
