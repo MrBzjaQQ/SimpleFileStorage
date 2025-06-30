@@ -1,0 +1,32 @@
+<div class="controls">
+  <input type="text" placeholder="Search..." [(ngModel)]="searchTerm">
+  <button (click)="onSearch()">Search</button>
+  <input type="file" #fileInput hidden (change)="onUpload()">
+  <button (click)="fileInput.click()">Upload</button>
+</div>
+
+<table>
+  <thead>
+  <tr>
+    <th>File Name</th>
+    <th>Uploaded At</th>
+    <th>Actions</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let file of files">
+    <td>{{ file.fileName }}</td>
+    <td>{{ file.uploadedAt | date:'short' }}</td>
+    <td>
+      <button (click)="downloadFile(file)">Download</button>
+      <button (click)="deleteFile(file.id)">Delete</button>
+    </td>
+  </tr>
+  </tbody>
+</table>
+
+<div class="pagination">
+  <button (click)="prevPage()" [disabled]="skip === 0">Prev</button>
+  <span>Showing {{ skip + 1 }}–{{ skip + totalLoaded }}</span>
+  <button (click)="nextPage()" [disabled]="totalLoaded < take">Next</button>
+</div>
