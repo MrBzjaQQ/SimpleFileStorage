@@ -35,6 +35,8 @@ public static class DependencyInjection
     
     private static IServiceCollection AddAppServices(this IServiceCollection services)
     {
+        services.AddTransient<IDateTimeProvider, DateTimeProvider>();
+        services.AddTransient<IGuidProvider, GuidProvider>();
         services.AddTransient<IFileService, FileService>();
         return services;
     }

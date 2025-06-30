@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
+using Moq;
 using SimpleFileStorage.Web.AppServices;
 using SimpleFileStorage.Web.AppServices.Contract;
 using SimpleFileStorage.Web.DataAccess;
@@ -15,12 +16,18 @@ namespace SimpleFileStorage.Tests;
 [TestFixture]
 public class FileServiceTests
 {
+    private readonly Mock<IDateTimeProvider> _dateTimeProviderMock = new();
+    private readonly Mock<IGuidProvider> _guidProviderMock = new();
+    private readonly DateTime _defaultDateTime = new(2099, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+    private readonly Guid _defaultGuid = Guid.CreateVersion7();
     private PostgreSqlContainer _pgContainer;
     private string _storagePath;
 
     [OneTimeSetUp]
     public async Task OneTimeSetup()
     {
+        _dateTimeProviderMock.SetupGet(x => x.UtcNow).Returns(_defaultDateTime);
+        _guidProviderMock.Setup(x => x.CreateVersion7()).Returns(_defaultGuid);
         _pgContainer = new PostgreSqlBuilder()
             .WithDatabase("files")
             .WithUsername("postgres")
@@ -52,21 +59,22 @@ public class FileServiceTests
         var fileRepo = new FileRepository(dbContext);
         var settings = Options.Create(new StorageSettings { FileStoragePath = _storagePath, MaxFileSizeKb = 2048 });
         var fsRepo = new FileSystemRepository(new FakeEnvironment(), settings);
-        return new FileService(fileRepo, fsRepo, settings);
+        return new FileService(fileRepo, fsRepo, _guidProviderMock.Object, _dateTimeProviderMock.Object, settings);
     }
 
     [Test]
     public async Task UploadDownloadDelete_Success()
-    {
+    { 
         const string content = "Hello";
-        const string fileName = "nested/path/test.txt";
+        string fileName = _defaultGuid.ToString();
+        string fullFileName = $"nested/path/{fileName}";
         var service = CreateService();
 
         var fileContent = new MemoryStream(Encoding.UTF8.GetBytes(content));
-        var formFile = new FormFile(fileContent, 0, fileContent.Length, "file", "test.txt");
+        var formFile = new FormFile(fileContent, 0, fileContent.Length, "file", fileName);
 
-        var uploaded = await service.UploadAsync(formFile, fileName);
-        Assert.That(uploaded.FileName, Is.EqualTo(fileName));
+        var uploaded = await service.UploadAsync(formFile, fullFileName);
+        Assert.That(uploaded.FileName, Is.EqualTo(fullFileName));
 
         var downloaded = await service.DownloadAsync(uploaded.Id);
         using var reader = new StreamReader(downloaded.File);

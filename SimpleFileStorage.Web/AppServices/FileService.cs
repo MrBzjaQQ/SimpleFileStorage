@@ -11,12 +11,21 @@ public sealed class FileService : IFileService
 {
     private readonly IFileRepository _fileRepository;
     private readonly IFileSystemRepository _fsRepository;
+    private readonly IGuidProvider _guidProvider;
+    private readonly IDateTimeProvider _dateTimeProvider;
     private readonly StorageSettings _settings;
 
-    public FileService(IFileRepository fileRepository, IFileSystemRepository fsRepository, IOptions<StorageSettings> settings)
+    public FileService(
+        IFileRepository fileRepository,
+        IFileSystemRepository fsRepository,
+        IGuidProvider guidProvider,
+        IDateTimeProvider dateTimeProvider,
+        IOptions<StorageSettings> settings)
     {
         _fileRepository = fileRepository;
         _fsRepository = fsRepository;
+        _guidProvider = guidProvider;
+        _dateTimeProvider = dateTimeProvider;
         _settings = settings.Value;
     }
 
@@ -25,13 +34,14 @@ public sealed class FileService : IFileService
         if (file.Length > _settings.MaxFileSizeKb * 1024)
             throw new InvalidOperationException("File too large");
 
-        await _fsRepository.SaveAsync(file, fileName);
+        var uniqueFileName = _guidProvider.CreateVersion7();
+        await _fsRepository.SaveAsync(file, uniqueFileName.ToString());
 
         var stored = new StoredFile
         {
-            Id = Guid.CreateVersion7(),
+            Id = uniqueFileName,
             FileName = fileName,
-            UploadedAt = DateTime.UtcNow
+            UploadedAt = _dateTimeProvider.UtcNow
         };
 
         return await _fileRepository.AddAsync(stored);
@@ -42,7 +52,7 @@ public sealed class FileService : IFileService
         var file = await _fileRepository.GetAsync(id) ?? throw new FileNotFoundException();
         return new DownloadResponse
         {
-            File = await _fsRepository.ReadAsync(file.FileName),
+            File = await _fsRepository.ReadAsync(file.Id.ToString()),
             FileName = file.FileName
         };
     }
@@ -50,7 +60,7 @@ public sealed class FileService : IFileService
     public async Task DeleteAsync(Guid id)
     {
         var file = await _fileRepository.GetAsync(id) ?? throw new FileNotFoundException();
-        _fsRepository.Delete(file.FileName);
+        _fsRepository.Delete(file.Id.ToString());
         await _fileRepository.DeleteAsync(file);
     }
 
