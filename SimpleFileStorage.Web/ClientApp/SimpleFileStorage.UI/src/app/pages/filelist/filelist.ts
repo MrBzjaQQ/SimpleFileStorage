@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import {ApiService, StoredFile} from '../../services/apiservice.js';
-import { saveAs } from 'file-saver';
+import { saveAs } from '../../utils/file-saver-wrapper';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
