@@ -12,11 +12,10 @@ builder.Services.AddOpenApi();
 builder.Services.ConfigureServices(connectionString);
 
 var app = builder.Build();
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.MapScalarApiReference();
-}
+
+app.MapOpenApi();
+app.MapScalarApiReference();
+app.UseStaticFiles();
 
 app.MigrateDatabase();
 
